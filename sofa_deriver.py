@@ -211,7 +211,7 @@ def reprocess_sofa_c_lines(inlns, func_prefix, inlinelicensestr):
     return outlns
 
 
-def download_sofa(url=None, dlloc='.', extract=False):
+def download_sofa(url=None, dlloc='.'):
     """
     Downloads the latest version of SOFA (or one specified via `url`) to
     the `dlloc` directory.
@@ -220,7 +220,6 @@ def download_sofa(url=None, dlloc='.', extract=False):
     """
     import os
     import urllib
-    import tarfile
 
     if url is None:
         url = _find_sofa_url_on_web_page()
@@ -231,14 +230,10 @@ def download_sofa(url=None, dlloc='.', extract=False):
 
     fnpath = os.path.join(dlloc, fn)
     print('Downloading {fn} to {fnpath}'.format(fn=fn, fnpath=fnpath))
-    urllib.urlretrieve(url, fnpath)
+    retfn, headers = urllib.urlretrieve(url, fnpath)
 
-    if extract:
-        tar = tarfile.open(fnpath)
-        try:
-            tar.extractall(dlloc)
-        finally:
-            tar.close()
+    return retfn
+
 
 
 def _find_sofa_url_on_web_page(url='http://www.iausofa.org/current_C.html'):
@@ -284,7 +279,7 @@ if __name__ == '__main__':
     if len(lstar) > 1:
         print("Found multiple sofa_c*.tar.gz files - can't pick which "
               "one to use:" + str(lstar))
-    if len(lstar) < 0:
+    if len(lstar) == 0:
         print('Did not find any sofa_c*.tar.gz files - downloading.')
         lstar = [download_sofa()]
 
