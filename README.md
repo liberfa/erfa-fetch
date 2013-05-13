@@ -1,9 +1,17 @@
 ERAS
 ====
 
-Essential Routines for Astronomy
+Essential Routines for AStronomy
 
-This repository contains scripts for converting the Standards of Fundamental Astronomy (SOFA) library to a form that can be re-licensed with a BSD license.
+This repository contains the tools necessary for downloading the latest 
+Standards of Fundamental Astronomy (SOFA) library and converting it to ERAS, 
+a BSD-licensed code.
+
+To download the latest SOFA and use it to generate ERAS source code, just do:
+
+    python sofa_deriver.py
+
+To see more options, do ``python sofa_deriver.py --help``
 
 To compile and execute the tests, do:
 
