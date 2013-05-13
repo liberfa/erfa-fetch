@@ -20,9 +20,9 @@ hhdrtempl = """#ifndef {libname}HDEF
 #include <math.h>
 
 /*
-**  - - - - - - - - -
+**  - - - - - - -
 **   {libnmspace} . h
-**  - - - - - - - - -
+**  - - - - - - -
 **
 **  Prototype function declarations and macros for {libname} library.
 **
@@ -154,7 +154,8 @@ def reprocess_files(sofatarfn, libname='eras', func_prefix='era',
                 if l.startswith('*/'):
                     inhdr = False
             else:
-                tstlines.append(l.replace('iau', func_prefix))
+                replln = l.replace('iau', func_prefix).replace('SOFA', libname.upper()).replace('sofa', libname)
+                tstlines.append(replln)
 
         #turn the license string into a C comment
         endlicensestr = '**  ' + '\n**  '.join(endlicensestr.split('\n'))
