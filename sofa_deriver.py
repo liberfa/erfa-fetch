@@ -46,9 +46,47 @@ static int verbose = 0;
 */
 """
 
+#this is put at the *end* of the documentation comment for all C functions.
+DEFAULT_INLINE_LICENSE_STR = """Licensed under a 3-clause BSD style license - see the end of this file
+
+Copyright (c) 2013, Astropy Developers
+All rights reserved.
+"""
+
+#This is placed at
+DEFAULT_FILE_END_LICENSE_STR = """
+Copyright (c) 2013, Astropy Developers
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+* Neither the name of Astropy nor the names of its contributors
+  may be used to endorse or promote products derived from this software
+  without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE.
+"""
+
 
 def reprocess_files(sofatarfn, libname='eras', func_prefix='era',
-                    inlinelicensestr='ILLIC', endlicensestr='ENDLICENSE'):
+                    inlinelicensestr=DEFAULT_INLINE_LICENSE_STR,
+                    endlicensestr=DEFAULT_FILE_END_LICENSE_STR):
     import tarfile
 
     outcfn = libname + '.c'
@@ -105,7 +143,7 @@ def reprocess_files(sofatarfn, libname='eras', func_prefix='era',
                 tstlines.append(l.replace('iau', func_prefix))
 
         #turn the license string into a C comment
-        endlicensestr = '**  ' + '**  \n'.join(endlicensestr.split('\n'))
+        endlicensestr = '**  ' + '\n**  '.join(endlicensestr.split('\n'))
         endlicensestr = '/*\n' + endlicensestr + '\n*/\n'
 
         #now write h- and c-files
