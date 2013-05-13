@@ -38,9 +38,9 @@ tsthdrtempl = """#include "{outhfn}"
 static int verbose = 0;
 
 /*
-**  - - - - - - - - -
-**   t _ {libnmspace} _ c
-**  - - - - - - - - -
+**  - - - - - - - - - -
+**   t e s t _ {libnmspace}
+**  - - - - - - - - - -
 **
 **  Validate the {libname} C functions.
 **
@@ -105,7 +105,7 @@ def reprocess_files(sofatarfn, libname='eras', func_prefix='era',
 
     outcfn = libname + '.c'
     outhfn = libname + '.h'
-    outtstfn = 't_{0}_c.c'.format(libname)
+    outtstfn = 'test_{0}.c'.format(libname)
 
     #first open the tar file
     tfn = tarfile.open(sofatarfn)
