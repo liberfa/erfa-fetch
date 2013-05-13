@@ -100,7 +100,8 @@ THE POSSIBILITY OF SUCH DAMAGE.
 
 def reprocess_files(sofatarfn, libname='eras', func_prefix='era',
                     inlinelicensestr=DEFAULT_INLINE_LICENSE_STR,
-                    endlicensestr=DEFAULT_FILE_END_LICENSE_STR):
+                    endlicensestr=DEFAULT_FILE_END_LICENSE_STR,
+                    verbose=True):
     import tarfile
 
     outcfn = libname + '.c'
@@ -161,9 +162,10 @@ def reprocess_files(sofatarfn, libname='eras', func_prefix='era',
         endlicensestr = '**  ' + '\n**  '.join(endlicensestr.split('\n'))
         endlicensestr = '/*\n' + endlicensestr + '\n*/\n'
 
-        #now write h- and c-files
+        #now write h- and c-files, and the testing file
+        if verbose:
+            print('Writing headers to ' + outhfn)
         with open(outhfn, 'w') as fw:
-
             #first the header
             fw.write(hhdrtempl.format(libname=libname.upper(), libnmspace=' '.join(libname)))
             for l in hlines:
@@ -172,6 +174,8 @@ def reprocess_files(sofatarfn, libname='eras', func_prefix='era',
             fw.write(endlicensestr)
             fw.write('\n#endif\n\n')
 
+        if verbose:
+            print('Writing C functions to ' + outcfn)
         with open(outcfn, 'w') as fw:
             fw.write(chdrtempl.format(outhfn=outhfn))  # does not need any substitutions, just imports
             for l in clines:
@@ -179,6 +183,8 @@ def reprocess_files(sofatarfn, libname='eras', func_prefix='era',
             fw.write('\n')
             fw.write(endlicensestr)
 
+        if verbose:
+            print('Writing tests to ' + outtstfn)
         with open(outtstfn, 'w') as fw:
             #fill in all the missing header
             fw.write(tsthdrtempl.format(libname=libname.upper(), libnmspace=' '.join(libname), outhfn=outhfn))
@@ -262,7 +268,7 @@ def reprocess_sofa_c_lines(inlns, func_prefix, inlinelicensestr):
     return outlns
 
 
-def download_sofa(url=None, dlloc='.'):
+def download_sofa(url=None, dlloc='.', verbose=True):
     """
     Downloads the latest version of SOFA (or one specified via `url`) to
     the `dlloc` directory.
@@ -280,7 +286,8 @@ def download_sofa(url=None, dlloc='.'):
         raise ValueError('Requested dlloc {0} is not a directory'.format(dlloc))
 
     fnpath = os.path.join(dlloc, fn)
-    print('Downloading {fn} to {fnpath}'.format(fn=fn, fnpath=fnpath))
+    if verbose:
+        print('Downloading {fn} to {fnpath}'.format(fn=fn, fnpath=fnpath))
     retfn, headers = urllib.urlretrieve(url, fnpath)
 
     return retfn
@@ -323,16 +330,53 @@ def _find_sofa_url_on_web_page(url='http://www.iausofa.org/current_C.html'):
 
 
 if __name__ == '__main__':
+    import sys
     import glob
+    import tarfile
+    import argparse
 
-    lstar = glob.glob('sofa_c*.tar.gz')
+    parser = argparse.ArgumentParser(description='Generates code derived from SOFA.')
+    parser.add_argument('sofafile', nargs='?', default=None, help='The sofa '
+                        '.tar.gz file to use.  If absent, the current '
+                        'directory will be searched, and if still absent, the '
+                        'latest sofa will be downloaded from the web.')
+    parser.add_argument('--download', '-d', default=False, action='store_true',
+                        help='Download the latest SOFA regardless regardless '
+                        'of whether there is already a SOFA in the current '
+                        'directory')
+    parser.add_argument('--quiet', '-q', default=False, action='store_true',
+                        help='Print less info to the terminal.')
+    args = parser.parse_args()
 
-    if len(lstar) > 1:
-        print("Found multiple sofa_c*.tar.gz files - can't pick which "
-              "one to use:" + str(lstar))
-    if len(lstar) == 0:
-        print('Did not find any sofa_c*.tar.gz files - downloading.')
-        lstar = [download_sofa()]
+    if args.download:
+        if args.sofafile is not None:
+            print('Cannot give both --download and sofafile!', file=sys.stderr)
+            sys.exit(1)
+        sofatarfn = download_sofa(verbose=not args.quiet)
+    elif args.sofafile is not None:
+        try:
+            #try to open the file as a tar file
+            f = tarfile.open(args.sofafile)
+            f.close()
+        except (IOError, tarfile.ReadError) as e:
+            print('requested sofafile "{0}" is not a valid tar file: '
+                  '"{1}"'.format(args.sofafile, e), file=sys.stderr)
+            sys.exit(1)
+        #all is ok - use the file below
+        sofatarfn = args.sofafile
+    else:
+        lstar = glob.glob('sofa_c*.tar.gz')
 
-    print('Using sofa tarfile {0} for reprocessing'.format(lstar[0]))
-    reprocess_files(lstar[0])
+        if len(lstar) > 1:
+            print("Found multiple sofa_c*.tar.gz files: {0} - can't pick which "
+                  "one to use:".format(lstar), file=sys.stderr)
+            sys.exit(1)
+        elif len(lstar) == 0:
+            if not args.quiet:
+                print('Did not find any sofa_c*.tar.gz files - downloading.')
+            sofatarfn = download_sofa(verbose=not args.quiet)
+        else:
+            sofatarfn = lstar[0]  # there is only one
+    if not args.quiet:
+        print('Using sofa tarfile "{0}" for reprocessing'.format(sofatarfn))
+    reprocess_files(sofatarfn, verbose=not args.quiet)
