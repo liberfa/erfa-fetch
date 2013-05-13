@@ -17,6 +17,8 @@ python sofa_deriver.py
 hhdrtempl = """#ifndef {libname}HDEF
 #define {libname}HDEF
 
+#include <math.h>
+
 /*
 **  - - - - - - - - -
 **   {libnmspace} . h
@@ -27,8 +29,11 @@ hhdrtempl = """#ifndef {libname}HDEF
 */
 """
 
-tsthdrtempl = """#include <stdio.h>
-#include "{outhfn}"
+tsthdrtempl = """#include "{outhfn}"
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 static int verbose = 0;
 
@@ -44,6 +49,15 @@ static int verbose = 0;
 **  message.  Failure of a given function or group of functions results
 **  in error messages.
 */
+"""
+
+chdrtempl = """#include "{outhfn}"
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <math.h>
+
 """
 
 #this is put at the *end* of the documentation comment for all C functions.
@@ -150,8 +164,7 @@ def reprocess_files(sofatarfn, libname='eras', func_prefix='era',
         with open(outhfn, 'w') as fw:
 
             #first the header
-            fw.write(hhdrtempl.format(libname=libname.upper(), libnmspace=' '.join(outhfn)))
-            fw.write('\n#include "math.h"\n\n')
+            fw.write(hhdrtempl.format(libname=libname.upper(), libnmspace=' '.join(libname)))
             for l in hlines:
                 fw.write(l)
             fw.write('\n')
@@ -159,8 +172,7 @@ def reprocess_files(sofatarfn, libname='eras', func_prefix='era',
             fw.write('\n#endif\n\n')
 
         with open(outcfn, 'w') as fw:
-            #header is just the includes
-            fw.write('#include "{outhfn}"\n#include "math.h"\n\n'.format(outhfn=outhfn))
+            fw.write(chdrtempl.format(outhfn=outhfn))  # does not need any substitutions, just imports
             for l in clines:
                 fw.write(l)
             fw.write('\n')
@@ -168,7 +180,7 @@ def reprocess_files(sofatarfn, libname='eras', func_prefix='era',
 
         with open(outtstfn, 'w') as fw:
             #fill in all the missing header
-            fw.write(tsthdrtempl.format(libname=libname.upper(), libnmspace=' '.join(outhfn), outhfn=outhfn))
+            fw.write(tsthdrtempl.format(libname=libname.upper(), libnmspace=' '.join(libname), outhfn=outhfn))
 
             for l in tstlines:
                 fw.write(l)
