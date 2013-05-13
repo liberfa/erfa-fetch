@@ -1,6 +1,19 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
+"""
+This script downloads the latest SOFA, and then transforms the code to
+include the appropriate copyright and function name changes.  It also
+scruches all of the .c files into a single file.
+
+In can be invoked directly on the commandline simple as::
+
+python sofa_deriver.py
+
+"""
+
+
+
 hhdrtempl = """#ifndef {libname}HDEF
 #define {libname}HDEF
 
