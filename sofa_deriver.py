@@ -13,11 +13,9 @@ python sofa_deriver.py
 """
 
 
-#this is put at the *end* of the documentation comment for all C functions.
 DEFAULT_INLINE_LICENSE_STR = """Copyright (c) 2013, <SOME LEGAL ORGANIZATION>
 Licensed under a 3-clause BSD style license - see the end of this file."""
 
-#This is placed at
 DEFAULT_FILE_END_LICENSE_STR = """Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
@@ -65,8 +63,7 @@ def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
     #turn the license strings into a SOFA-style C comment
     inlinelicensestr = '**  ' + '\n**  '.join(inlinelicensestr.split('\n')) + '\n'
     endlicensestr = '**  ' + '\n**  '.join(endlicensestr.split('\n'))
-    endlicensestr = '/*\n' + endlicensestr + '\n*/\n'
-
+    endlicensestr = '/*' + ('-' * 70) + '\n' + endlicensestr + '\n*/\n'
     #first open the tar file
     tfn = tarfile.open(sofatarfn)
     try:
