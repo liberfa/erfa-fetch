@@ -12,51 +12,6 @@ python sofa_deriver.py
 
 """
 
-hhdrtempl = """#ifndef {libname}HDEF
-#define {libname}HDEF
-
-#include <math.h>
-
-/*
-**  - - - - - - -
-**   {libnmspace} . h
-**  - - - - - - -
-**
-**  Prototype function declarations and macros for {libname} library.
-**
-*/
-"""
-
-tsthdrtempl = """#include "{outhfn}"
-
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
-static int verbose = 0;
-
-/*
-**  - - - - - - - - - -
-**   t e s t _ {libnmspace}
-**  - - - - - - - - - -
-**
-**  Validate the {libname} C functions.
-**
-**  Each {libname} function is at least called and a usually quite basic test
-**  is performed.  Successful completion is signalled by a confirming
-**  message.  Failure of a given function or group of functions results
-**  in error messages.
-*/
-"""
-
-chdrtempl = """#include "{outhfn}"
-
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <math.h>
-
-"""
 
 #this is put at the *end* of the documentation comment for all C functions.
 DEFAULT_INLINE_LICENSE_STR = """Copyright (c) 2013, <SOME LEGAL ORGANIZATION>
@@ -206,7 +161,10 @@ def reprocess_sofa_c_lines(inlns, func_prefix, libname, inlinelicensestr):
                 inhdr = False
             else:
                 # make sure the includes are correct for the new libname
-                outlns.append(l.replace('sofa', libname.lower()))
+                if 's o f a' in l:
+                    #rare case - just the test file - so it gets a special if
+                    l = l.replace('s o f a', ' '.join(libname.lower()))
+                outlns.append(l.replace('sofa', libname.lower()).replace('SOFA', libname.upper()))
         elif insofapart:
             #don't write out any of the disclaimer about being part of SOFA
             if l.strip() == '**':
