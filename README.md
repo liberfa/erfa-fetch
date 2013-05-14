@@ -9,11 +9,13 @@ To download the latest SOFA and use it to generate ERFA source code, just do:
 
     python sofa_deriver.py
 
+which should generate an `erfa` directory with all the source code.
+
 To see more options, do ``python sofa_deriver.py --help``
 
 To compile and execute the tests, do:
 
-    [CC] erfa.c test_erfa.c -o test_erfa
+    [CC] erfa/*.c -o test_erfa
     ./test_erfa --verbose
 
 where ``[CC]`` is replaced by your preferred C compiler.

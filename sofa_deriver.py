@@ -12,8 +12,6 @@ python sofa_deriver.py
 
 """
 
-
-
 hhdrtempl = """#ifndef {libname}HDEF
 #define {libname}HDEF
 
@@ -61,18 +59,11 @@ chdrtempl = """#include "{outhfn}"
 """
 
 #this is put at the *end* of the documentation comment for all C functions.
-DEFAULT_INLINE_LICENSE_STR = """Licensed under a 3-clause BSD style license - see the end of this file
-
-Copyright (c) 2013, <SOME LEGAL ORGANIZATION>
-All rights reserved.
-"""
+DEFAULT_INLINE_LICENSE_STR = """Copyright (c) 2013, <SOME LEGAL ORGANIZATION>
+Licensed under a 3-clause BSD style license - see the end of this file."""
 
 #This is placed at
-DEFAULT_FILE_END_LICENSE_STR = """
-Copyright (c) 2013, <SOME LEGAL ORGANIZATION>
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
+DEFAULT_FILE_END_LICENSE_STR = """Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
 * Redistributions of source code must retain the above copyright notice,
@@ -98,114 +89,93 @@ THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 
-def reprocess_files(sofatarfn, libname='erfa', func_prefix='era',
-                    inlinelicensestr=DEFAULT_INLINE_LICENSE_STR,
-                    endlicensestr=DEFAULT_FILE_END_LICENSE_STR,
-                    verbose=True):
+def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
+                           inlinelicensestr=DEFAULT_INLINE_LICENSE_STR,
+                           endlicensestr=DEFAULT_FILE_END_LICENSE_STR,
+                           verbose=True):
+    """
+    Takes a SOFA .tar.gz file and produces a derived version of the
+    source code with custom licensing and copyright.
+
+    The resulting source code will be placed in a directory matching
+    `libname`.
+    """
+    import os
     import tarfile
 
-    outcfn = libname + '.c'
-    outhfn = libname + '.h'
-    outtstfn = 'test_{0}.c'.format(libname)
+    filecontents = {}
+    # this dict maps filenames to the code in the form of a list of strings.
+    # they do *not* have the end license, as that gets added when writing.
+
+    #turn the license strings into a SOFA-style C comment
+    inlinelicensestr = '**  ' + '\n**  '.join(inlinelicensestr.split('\n')) + '\n'
+    endlicensestr = '**  ' + '\n**  '.join(endlicensestr.split('\n'))
+    endlicensestr = '/*\n' + endlicensestr + '\n*/\n'
 
     #first open the tar file
     tfn = tarfile.open(sofatarfn)
     try:
-        hlines = []
-        clines = []
-        tstlines = []
-
-        #now look for the h-files in the tar file, with sofa.h first
-        htinfo = []
         for ti in tfn:
+            contents = None
+
             if ti.name.endswith('.h'):
-                htinfo.append(ti)
-        assert len(htinfo) == 2, "should only have two .h files in the sofa archive.  Found:" + str(htinfo)
+                contents = reprocess_sofa_h_lines(tfn.extractfile(ti),
+                                                  func_prefix,
+                                                  libname,
+                                                  inlinelicensestr)
+            elif ti.name.endswith('.c'):
+                contents = reprocess_sofa_c_lines(tfn.extractfile(ti),
+                                                  func_prefix,
+                                                  libname,
+                                                  inlinelicensestr)
+            #ignore everything else
+            if contents is not None:
+                # if "sofa" appears in the name, change appropriately
+                filename = ti.name.split('/')[-1].replace('sofa', libname.lower())
 
-        if htinfo[0].name.endswith('sofam.h'):
-            # swap order
-            htinfo.append(htinfo[0])
-            del htinfo[0]
+                filecontents[filename] = contents
 
-        #now extract the contents of the h files for writing later
-        for ti in htinfo:
-            hlines.extend(reprocess_sofa_h_lines(tfn.extractfile(ti), func_prefix))
-            hlines.append('\n')
+        #now write out all the files, including the end license
+        dirnm = os.path.abspath(os.path.join('.', libname))
+        if not os.path.isdir(dirnm):
+            if verbose:
+                print('Making directory', dirnm)
+            os.mkdir(dirnm)
 
-        #find the .c files for processing
-        testctarinfo = None  # tarinfo obj for the test's c file
-        ctinfodct = {}
-        for ti in tfn:
-            if ti.name.endswith('.c'):
-                if ti.name.endswith('t_sofa_c.c'):
-                    testctarinfo = ti
-                else:
-                    ctinfodct[ti.name.split('/')[-1]] = ti
 
-        #now process the c files in lexical sort order for writing later
-        for nm in sorted(ctinfodct):
-            fr = tfn.extractfile(ctinfodct[nm])
-            clines.extend(reprocess_sofa_c_lines(fr, func_prefix, inlinelicensestr))
 
-        #finally, get out the tests C-file, but without the SOFA-using header
+        for fn, lines in filecontents.iteritems():
+            fullfn = os.path.join(dirnm, fn)
 
-        inhdr = True
-        for l in tfn.extractfile(testctarinfo):
-            if inhdr:
-                if l.startswith('*/'):
-                    inhdr = False
-            else:
-                replln = l.replace('iau', func_prefix).replace('SOFA', libname.upper()).replace('sofa', libname)
-                tstlines.append(replln)
+            if verbose:
+                print('Writing to file', fullfn)
+            with open(fullfn, 'w') as f:
+                f.write(''.join(lines))
+                f.write(endlicensestr)
 
-        #turn the license string into a C comment
-        endlicensestr = '**  ' + '\n**  '.join(endlicensestr.split('\n'))
-        endlicensestr = '/*\n' + endlicensestr + '\n*/\n'
-
-        #now write h- and c-files, and the testing file
-        if verbose:
-            print('Writing headers to ' + outhfn)
-        with open(outhfn, 'w') as fw:
-            #first the header
-            fw.write(hhdrtempl.format(libname=libname.upper(), libnmspace=' '.join(libname)))
-            for l in hlines:
-                fw.write(l)
-            fw.write('\n')
-            fw.write(endlicensestr)
-            fw.write('\n#endif\n\n')
-
-        if verbose:
-            print('Writing C functions to ' + outcfn)
-        with open(outcfn, 'w') as fw:
-            fw.write(chdrtempl.format(outhfn=outhfn))  # does not need any substitutions, just imports
-            for l in clines:
-                fw.write(l)
-            fw.write('\n')
-            fw.write(endlicensestr)
-
-        if verbose:
-            print('Writing tests to ' + outtstfn)
-        with open(outtstfn, 'w') as fw:
-            #fill in all the missing header
-            fw.write(tsthdrtempl.format(libname=libname.upper(), libnmspace=' '.join(libname), outhfn=outhfn))
-
-            for l in tstlines:
-                fw.write(l)
-            fw.write('\n')
     finally:
         tfn.close()
 
 
-def reprocess_sofa_h_lines(inlns, func_prefix):
+def reprocess_sofa_h_lines(inlns, func_prefix, libname, inlinelicensestr):
     outlns = []
-    inhdr = True  # everything up to and including the includes
+    donewheader = False
 
     for l in inlns:
-        if inhdr:
-            if l.startswith('#include'):
-                inhdr = 'incl'
-            elif inhdr == 'incl':
-                inhdr = False
+        if l.startswith('#'):
+            #includes and #ifdef/#define directives
+            outlns.append(l.replace('SOFA', libname.upper()).replace('sofa', libname.lower()))
+        elif l.startswith('**'):
+            if not donewheader:
+                if l.startswith('**  This file is part of the International Astronomical Union'):
+                    #after this it's all IAU/SOFA-specific stuff, so replace with ours
+                    donewheader = True
+                    outlns.append(inlinelicensestr)
+                elif 's o f a' in l:
+                    outlns.append(l.replace('s o f a', ' '.join(libname.lower())))
+                else:
+                    outlns.append(l.replace('SOFA', libname.upper()))
+
         elif l.startswith('/*----------------------------------------------------------------------'):
             #in license section at end of file
             outlns.append('\n')
@@ -213,31 +183,36 @@ def reprocess_sofa_h_lines(inlns, func_prefix):
         else:
             outlns.append(l.replace('iau', func_prefix))
 
-    if outlns[-3].startswith('#endif'):
-        outlns = outlns[:-3]
 
     return outlns
 
 
-def reprocess_sofa_c_lines(inlns, func_prefix, inlinelicensestr):
+def reprocess_sofa_c_lines(inlns, func_prefix, libname, inlinelicensestr):
     spaced_prefix = ' '.join(func_prefix)
 
     outlns = []
     inhdr = True  # start inside the header before the function def'n
+    insofapart = False  # the part of the header that's SOFA-specific
     replacedprefix = False  # indicates if the "iau" line has been hit
     replacedspacedprefix = False  # indicates if the "i a u" line has been hit
     incopyright = False  # indicates being inside the copyright/revision part of the doc comment of the SOFA function
 
     for l in inlns:
         if inhdr:
-            # *don't* include the header because it has includes
-            # that are shared in the to-be-created file
-
             if (not replacedprefix) and 'iau' in l:
                 # this is the function definition and the end of the header
                 outlns.append(l.replace('iau', func_prefix))
                 replacedprefix = True
                 inhdr = False
+            else:
+                # make sure the includes are correct for the new libname
+                outlns.append(l.replace('sofa', libname.lower()))
+        elif insofapart:
+            #don't write out any of the disclaimer about being part of SOFA
+            if l.strip() == '**':
+                insofapart = False
+        elif l.startswith('**  This function is part of the International Astronomical Union'):
+            insofapart = True
         elif (not replacedspacedprefix) and 'i a u' in l:
             outlns.append(l.replace('i a u', spaced_prefix))
             replacedspacedprefix = True
@@ -258,12 +233,10 @@ def reprocess_sofa_c_lines(inlns, func_prefix, inlinelicensestr):
 
             #but put in the correct inline license instead
             if inlinelicensestr:
-                inlinelicensestr = '**  ' + inlinelicensestr
-                outlns.append('\n**  '.join(inlinelicensestr.split('\n')))
-                outlns.append('\n')
+                outlns.append(inlinelicensestr)
         else:
             # need to replace 'iau' b/c other SOFA functions are often called
-            outlns.append(l.replace('iau', func_prefix))
+            outlns.append(l.replace('iau', func_prefix).replace('sofa', libname))
 
     return outlns
 
@@ -291,7 +264,6 @@ def download_sofa(url=None, dlloc='.', verbose=True):
     retfn, headers = urllib.urlretrieve(url, fnpath)
 
     return retfn
-
 
 
 def _find_sofa_url_on_web_page(url='http://www.iausofa.org/current_C.html'):
@@ -379,4 +351,4 @@ if __name__ == '__main__':
             sofatarfn = lstar[0]  # there is only one
     if not args.quiet:
         print('Using sofa tarfile "{0}" for reprocessing'.format(sofatarfn))
-    reprocess_files(sofatarfn, verbose=not args.quiet)
+    reprocess_sofa_tarfile(sofatarfn, verbose=not args.quiet)
