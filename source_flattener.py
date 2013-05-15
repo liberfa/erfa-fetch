@@ -2,14 +2,14 @@
 from __future__ import print_function
 
 
-hhdrtempl = """#ifndef {libname}HDEF
-#define {libname}HDEF
+hhdrtempl = """#ifndef {libnameup}HDEF
+#define {libnameup}HDEF
 
 #include <math.h>
 
 /*
 **  - - - - - - -
-**   {libnmspace} . h
+**   {libnamespace} . h
 **  - - - - - - -
 **
 **  Prototype function declarations and macros for {libname} library.
@@ -22,7 +22,6 @@ chdrtempl = """#include "{houtfn}"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <math.h>
 
 """
 
@@ -48,12 +47,30 @@ def flatten_source(srcdir, verbose=False):
 
     #first process the header files and combine into one
     hlines = []
-    for fn in hinfns:
+    for i, fn in enumerate(sorted(hinfns)):
         contentlines, hlicense = extract_content(fn)
-        hlines.extend(contentlines)
+
+        # first remove the header up through the end of the license comment
+        for j, l in enumerate(contentlines):
+            if l.startswith('*/'):
+                hdrendidx = j
+                break
+        else:
+            raise ValueError('Never found comment end in {0}'.format(fn))
+
+        #now look for where the final #ifdef __cplusplus is, and remove all after
+        ifdefidxs = [idx for idx, l in enumerate(contentlines) if l.startswith('#ifdef __cplusplus')]
+        if len(ifdefidxs) > 0:
+            upto = max(ifdefidxs)
+        else:
+            #if no cplusplus's, strip from the last #endif
+            ifdefidxs = [idx for idx, l in enumerate(contentlines) if l.startswith('#endif')]
+            upto = max(ifdefidxs)
+
+        hlines.extend(contentlines[(hdrendidx + 1):upto])
 
     clines = []
-    for fn in cinfns:
+    for fn in sorted(cinfns):
         contentlines, clicense = extract_content(fn)
         clines.extend(contentlines)
 
@@ -61,8 +78,12 @@ def flatten_source(srcdir, verbose=False):
     if verbose:
         print('Writing', houtfn)
     with open(houtfn, 'w') as fw:
-        fw.write(hhdrtempl.format(libnmspace=' '.join(srcdir), libname=srcdir))
+        fw.write(hhdrtempl.format(libnamespace=' '.join(srcdir),
+                                  libnameup=srcdir.upper(),
+                                  libname=srcdir))
         fw.write(''.join(hlines))
+        #need to add an extra endif
+        fw.write('#endif\n\n')
         fw.write(hlicense)
 
     if verbose:
@@ -77,12 +98,14 @@ def flatten_source(srcdir, verbose=False):
         print('Writing', testoutfn)
     with open(testoutfn, 'w') as fw:
         with open(testinfn) as fr:
-            fw.write(fr.read())
+            s = fr.read()
+            torepl = '#include "{0}"'.format(houtfn.replace('.h', 'm.h'))
+            fw.write(s.replace(torepl, ''))
 
 
 def extract_content(fn):
     lastincl = False
-    inlicense = True
+    inlicense = False
     lines = []
     licenselines = []
     with open(fn) as f:
