@@ -70,7 +70,13 @@ def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
         for ti in tfn:
             contents = None
 
-            if ti.name.endswith('.h'):
+            if ti.name.endswith('t_sofa_c.c'):
+                #test file
+                contents = reprocess_sofa_test_lines(tfn.extractfile(ti),
+                                                     func_prefix,
+                                                     libname,
+                                                     inlinelicensestr)
+            elif ti.name.endswith('.h'):
                 contents = reprocess_sofa_h_lines(tfn.extractfile(ti),
                                                   func_prefix,
                                                   libname,
@@ -158,9 +164,6 @@ def reprocess_sofa_c_lines(inlns, func_prefix, libname, inlinelicensestr):
                 inhdr = False
             else:
                 # make sure the includes are correct for the new libname
-                if 's o f a' in l:
-                    #rare case - just the test file - so it gets a special if
-                    l = l.replace('s o f a', ' '.join(libname.lower()))
                 outlns.append(l.replace('sofa', libname.lower()).replace('SOFA', libname.upper()))
         elif insofapart:
             #don't write out any of the disclaimer about being part of SOFA
@@ -192,6 +195,36 @@ def reprocess_sofa_c_lines(inlns, func_prefix, libname, inlinelicensestr):
         else:
             # need to replace 'iau' b/c other SOFA functions are often called
             outlns.append(l.replace('iau', func_prefix).replace('sofa', libname))
+
+    return outlns
+
+
+def reprocess_sofa_test_lines(inlns, func_prefix, libname, inlinelicensestr):
+    spaced_libname = ' '.join(libname)
+    libnamelow = libname.lower()
+    libnameup = libname.upper()
+
+    outlns = []
+    inhdr = True
+    insofapart = False
+    for l in inlns:
+        if inhdr:
+            if l.startswith('**  SOFA release'):
+                insofapart = True
+
+            if insofapart:
+                if l.startswith('*/'):
+                    insofapart = False
+                    outlns.append(l)
+                continue
+
+            l = l.replace('s o f a', spaced_libname)
+
+        l = l.replace('iau', func_prefix)
+        l = l.replace('sofa', libnamelow)
+        l = l.replace('SOFA', libnameup)
+
+        outlns.append(l)
 
     return outlns
 
