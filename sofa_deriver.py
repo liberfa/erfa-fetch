@@ -37,9 +37,9 @@ Copyright (c) 2012, Standards Of Fundamental Astronomy Board
   of the International Astronomical Union.
 All rights reserved.
 
-This library is derived, with permission, from the "Standards of
-Fundamental Astronomy" library distributed by the International
-Astronomical Union (http://www.iausofa.org).
+This library is derived, with permission, from the International
+Astronomical Union's "Standards of Fundamental Astronomy" library,
+available from http://www.iausofa.org.
 
 The intended differences of this version are to retain identical
 functionality to the SOFA library, but with different routine and
