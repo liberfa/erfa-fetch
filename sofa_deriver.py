@@ -19,21 +19,9 @@ To see the options.
 
 
 DEFAULT_INLINE_LICENSE_STR = """
-
-
-This function is derived, with permission, from the "Standards of
-Fundamental Astronomy" library distributed by the International
-Astronomical Union (http://www.iausofa.org).
-
-The {libnameup} version is intended to retain identical functionality to
-the SOFA library, but with different routine and file names. Although
-the intent is to replicate the SOFA API (other than replacement of
-prefix names) and results (with the exception of bugs; any that are
-discovered will be fixed), SOFA is not responsible for any errors found
-in this version of the library.
-
-If you wish to acknowledge the SOFA heritage, please acknowledge that
-you are using a library derived from SOFA, rather than SOFA itself."""
+Derived, with permission, from the SOFA library and licensed under a 3-clause
+BSD license.  See the end of this file for details
+"""[1:-1]
 
 DEFAULT_FILE_END_LICENSE_STR = """
 
@@ -46,13 +34,12 @@ This library is derived, with permission, from the International
 Astronomical Union's "Standards of Fundamental Astronomy" library,
 available from http://www.iausofa.org.
 
-The intended differences of this version are to retain identical
-functionality to the SOFA library, but with different routine and
-file names. Although the intent is to replicate the SOFA API (other than
-replacement of prefix names) and results (with the exception of bugs;
-any that are discovered will be fixed), SOFA is not responsible for any
-errors found in this version of the library.
-
+The {libnameup} version is intended to retain identical functionality to
+the SOFA library, but with different routine and file names. Although
+the intent is to replicate the SOFA API (other than replacement of
+prefix names) and results (with the exception of bugs; any that are
+discovered will be fixed), SOFA is not responsible for any errors found
+in this version of the library.
 If you wish to acknowledge the SOFA heritage, please acknowledge that
 you are using a library derived from SOFA, rather than SOFA itself.
 
@@ -108,6 +95,7 @@ def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
     #turn the license strings into a SOFA-style C comment
     inlinelicensestr = inlinelicensestr.format(libnameup=libname.upper())
     inlinelicensestr = '**  ' + '\n**  '.join(inlinelicensestr.split('\n')) + '\n'
+    endlicensestr = endlicensestr.format(libnameup=libname.upper())
     endlicensestr = '**  ' + '\n**  '.join(endlicensestr.split('\n'))
     endlicensestr = '/*' + ('-' * 70) + '\n' + endlicensestr + '\n*/\n'
     #first open the tar file
