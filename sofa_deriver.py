@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
+import sys
+
 """
 This script downloads the latest SOFA, and then transforms the code to
 include the appropriate copyright and function name changes.
@@ -138,12 +140,11 @@ def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
                 print('Making directory', dirnm)
             os.mkdir(dirnm)
 
-
-
         for fn, lines in filecontents.iteritems():
             fullfn = os.path.join(dirnm, fn)
 
             if verbose:
+                check_for_sofa(lines, fn)
                 print('Writing to file', fullfn)
             with open(fullfn, 'w') as f:
                 f.write(''.join(lines))
@@ -273,6 +274,24 @@ def reprocess_sofa_test_lines(inlns, func_prefix, libname, inlinelicensestr):
     return outlns
 
 
+#These strings are "acceptable" uses of the "SOFA" text
+ACCEPTSOFASTRS = ['Derived, with permission, from the SOFA library']
+
+
+def check_for_sofa(lns, fn='', printfile=sys.stderr):
+    if isinstance(lns, basestring):
+        lns = lns.split('\n')
+    for i, l in enumerate(lns):
+        if 'sofa' in l.lower():
+            for s in ACCEPTSOFASTRS:
+                if s in l:
+                    #means skip the "else" part
+                    break
+            else:
+                infile = 'in file "{0}" at line {1}'.format(fn, i)
+                print('WARNING: Found "SOFA"{infile}:\n{ln}'.format(infile=infile, ln=l), file=printfile)
+
+
 def download_sofa(url=None, dlloc='.', verbose=True):
     """
     Downloads the latest version of SOFA (or one specified via `url`) to
@@ -334,7 +353,6 @@ def _find_sofa_url_on_web_page(url='http://www.iausofa.org/current_C.html'):
 
 
 if __name__ == '__main__':
-    import sys
     import glob
     import tarfile
     import argparse
