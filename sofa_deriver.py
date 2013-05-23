@@ -209,6 +209,12 @@ def reprocess_sofa_c_lines(inlns, func_prefix, libname, inlinelicensestr):
                 insofapart = False
         elif l.startswith('**  This function is part of the International Astronomical Union'):
             insofapart = True
+        elif l.startswith('**  Status:'):
+            #don't include the status line which states if a function is
+            #canonical - ERFA isn't "canonical" as it is not IAU official
+            if outlns[-1].strip() == '**':
+                #Also drop the line with just '**' before it
+                del outlns[-1]
         elif (not replacedspacedprefix) and 'i a u' in l:
             outlns.append(l.replace('i a u', spaced_prefix))
             replacedspacedprefix = True
