@@ -25,7 +25,7 @@ BSD license.  See the end of this file for details
 
 DEFAULT_FILE_END_LICENSE_STR = """
 
-Copyright (c) 2013, <SOME LEGAL ORGANIZATION>.
+Copyright (c) 2013, NumFOCUS Foundation.
 Copyright (c) 2012, Standards Of Fundamental Astronomy Board
   of the International Astronomical Union.
 All rights reserved.
