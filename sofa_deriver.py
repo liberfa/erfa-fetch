@@ -239,7 +239,9 @@ def reprocess_sofa_c_lines(inlns, func_prefix, libname, inlinelicensestr):
                 outlns.append(inlinelicensestr)
         else:
             # need to replace 'iau' b/c other SOFA functions are often called
-            outlns.append(l.replace('iau', func_prefix).replace('sofa', libname))
+            outlns.append(l.replace('iau', func_prefix)
+                           .replace('sofa', libname)
+                           .replace('SOFA', libname.upper()))
 
     return outlns
 
