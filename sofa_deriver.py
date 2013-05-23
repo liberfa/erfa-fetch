@@ -3,12 +3,17 @@ from __future__ import print_function
 
 """
 This script downloads the latest SOFA, and then transforms the code to
-include the appropriate copyright and function name changes.  It also
-scruches all of the .c files into a single file.
+include the appropriate copyright and function name changes.
 
 In can be invoked directly on the commandline simple as::
 
-python sofa_deriver.py
+  python sofa_deriver.py
+
+Or do::
+
+  python sofa_deriver.py --help
+
+To see the options.
 
 """
 
