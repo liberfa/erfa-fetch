@@ -34,7 +34,7 @@ This library is derived, with permission, from the International
 Astronomical Union's "Standards of Fundamental Astronomy" library,
 available from http://www.iausofa.org.
 
-The {libnameup} version is intended to retain identical functionality to
+The {libnameuppercase} version is intended to retain identical functionality to
 the SOFA library, but with different routine and file names. Although
 the intent is to replicate the SOFA API (other than replacement of
 prefix names) and results (with the exception of bugs; any that are
@@ -84,6 +84,10 @@ def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
 
     The resulting source code will be placed in a directory matching
     `libname`.
+
+    Note that `inlinelicensestr` and `endlicensestr` should be plain
+    license/copyright statements (possibly with ``{libnameuppercase}``),
+    and this function will convert them to a C comment.
     """
     import os
     import tarfile
@@ -93,9 +97,9 @@ def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
     # they do *not* have the end license, as that gets added when writing.
 
     #turn the license strings into a SOFA-style C comment
-    inlinelicensestr = inlinelicensestr.format(libnameup=libname.upper())
+    inlinelicensestr = inlinelicensestr.format(libnameuppercase=libname.upper())
     inlinelicensestr = '**  ' + '\n**  '.join(inlinelicensestr.split('\n')) + '\n'
-    endlicensestr = endlicensestr.format(libnameup=libname.upper())
+    endlicensestr = endlicensestr.format(libnameuppercase=libname.upper())
     endlicensestr = '**  ' + '\n**  '.join(endlicensestr.split('\n'))
     endlicensestr = '/*' + ('-' * 70) + '\n' + endlicensestr + '\n*/\n'
     #first open the tar file
