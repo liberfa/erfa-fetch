@@ -21,15 +21,15 @@ To see the options.
 
 
 DEFAULT_INLINE_LICENSE_STR = """
-Copyright (c) 2013, NumFOCUS Foundation.
+Copyright (C) 2013, NumFOCUS Foundation.
 Copyright (C) 2012 IAU SOFA Board.
 Derived, with permission, from the SOFA library.  See notes at end of file.
 """[1:-1]
 
 DEFAULT_FILE_END_LICENSE_STR = """
 
-Copyright (c) 2013, NumFOCUS Foundation.
-Copyright (c) 2012, Standards Of Fundamental Astronomy Board
+Copyright (C) 2013, NumFOCUS Foundation.
+Copyright (C) 2012, Standards Of Fundamental Astronomy Board
   of the International Astronomical Union.
 All rights reserved.
 
@@ -353,6 +353,36 @@ def _find_sofa_url_on_web_page(url='http://www.iausofa.org/current_C.html'):
                          str(fullurls))
 
     return fullurls[0]
+
+def find_sourcedir():
+    """
+    This function is used by the other scripts to find a directory that looks
+    like it countains a SOFA-derived multi-file distribution.
+
+    Takes in a
+    """
+    import glob
+
+    dirfns = [fn for fn in os.listdir('.') if os.path.isdir(fn)]
+    validdirs = []
+    for dirfn in dirfns:
+        hfiles = glob.glob(os.path.join(dirfn, '*.h'))
+        if len(hfiles) == 2:
+            flens = [len(fn) for fn in hfiles]
+            sofainname = [('sofa' in fn.lower()) for fn in hfiles]
+            if min(flens) == (max(flens) - 1) and not any(sofainname):
+                validdirs.append(dirfn)
+
+    if len(validdirs) < 1:
+        print('No srcdir was given and no directory that looked like it '
+              'was SOFA-derived was found.')
+        sys.exit(1)
+    if len(validdirs) > 2:
+        print('No srcdir was given and multiple directories were found '
+              'that look SOFA-derived: ' + str(validdirs))
+        sys.exit(1)
+
+    return validdirs[0]
 
 
 if __name__ == '__main__':
