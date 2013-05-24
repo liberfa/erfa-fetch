@@ -21,8 +21,9 @@ To see the options.
 
 
 DEFAULT_INLINE_LICENSE_STR = """
-Derived, with permission, from the SOFA library and licensed under a 3-clause
-BSD license.  See the end of this file for details
+Copyright (c) 2013, NumFOCUS Foundation.
+Copyright (C) 2012 IAU SOFA Board.
+Derived, with permission, from the SOFA library.  See notes at end of file.
 """[1:-1]
 
 DEFAULT_FILE_END_LICENSE_STR = """
