@@ -26,14 +26,16 @@ chdrtempl = """#include "{houtfn}"
 """
 
 
-def flatten_source(srcdir, verbose=False):
+def flatten_source(srcdir, newname=None, verbose=False):
     import os
     import re
     import glob
 
-    coutfn = srcdir + '.c'
-    houtfn = srcdir + '.h'
-    testoutfn = 'test_{srcdir}.c'.format(srcdir=srcdir)
+    if newname is None:
+        newname = srcdir
+    coutfn = newname + '.c'
+    houtfn = newname + '.h'
+    testoutfn = 'test_{fn}.c'.format(fn=newname)
 
     cinfns = glob.glob(os.path.join(srcdir, '*.c'))
     hinfns = glob.glob(os.path.join(srcdir, '*.h'))
@@ -141,6 +143,9 @@ if __name__ == '__main__':
                         'to find the source code in. If not, all directories '
                         'under the current one will be searched for something '
                         'with .h files that look right.')
+    parser.add_argument('--newname', '-n', default=None, help='The base name '
+                        'to use for the new files.  Will default to the same '
+                        'as the source directory if not given.')
     parser.add_argument('--quiet', '-q', default=False, action='store_true',
                         help='Print less info to the terminal.')
     args = parser.parse_args()
@@ -169,4 +174,4 @@ if __name__ == '__main__':
     else:
         srcdir = args.srcdir
 
-    flatten_source(srcdir, not args.quiet)
+    flatten_source(srcdir, args.newname, not args.quiet)
