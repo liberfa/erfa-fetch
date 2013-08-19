@@ -441,6 +441,15 @@ if __name__ == '__main__':
             sofatarfn = download_sofa(verbose=not args.quiet)
         else:
             sofatarfn = lstar[0]  # there is only one
+
     if not args.quiet:
         print('Using sofa tarfile "{0}" for reprocessing'.format(sofatarfn))
+
     reprocess_sofa_tarfile(sofatarfn, verbose=not args.quiet)
+
+    if not args.quiet:
+        print('\nCreated new set of source files based on SOFA version '
+              '"{0}".'.format(sofatarfn.replace('sofa_c-', '').replace('.tar.gz', '')))
+        print('Be sure to update any relevant version information when you '
+              'copy this to its new home.')
+
