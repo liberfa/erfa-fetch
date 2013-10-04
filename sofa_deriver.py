@@ -2,6 +2,7 @@
 from __future__ import print_function
 
 import sys
+import re
 
 """
 This script downloads the latest SOFA, and then transforms the code to
@@ -117,6 +118,16 @@ def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
     #first open the tar file
     tfn = tarfile.open(sofatarfn)
     try:
+        # extract macro names from sofam.h
+        # except SOFAMHDEF
+        # we will use it later
+        exclude = ['SOFAMHDEF']
+        macros = []
+        for ti in tfn:
+            if ti.name.endswith('sofam.h'):
+                macros = extract_macro_names(tfn.extractfile(ti), exclude)
+                break
+    
         for ti in tfn:
             contents = None
 
@@ -150,14 +161,32 @@ def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
                 print('Making directory', dirnm)
             os.mkdir(dirnm)
 
+        # prepare to prefix the macros
+
+        # given a re match obj, return
+        # the match (the macro name), prefixed and upper cased
+        def prefix_macro(matchobj):
+            macro = matchobj.group(0)
+            return 'ERFA_%s' % macro.upper()
+
+        # precompile a regular expresion for each macro name
+        repls = [re.compile(r'\b%s\b' % macro) for macro in macros]
+
         for fn, lines in filecontents.iteritems():
             fullfn = os.path.join(dirnm, fn)
 
             if verbose:
                 check_for_sofa(lines, fn)
+
+            alllines = ''.join(lines)
+            # join the lines and make the replace
+            for repl in repls:
+                alllines = repl.sub(prefix_macro, alllines)
+
+            if verbose:
                 print('Writing to file', fullfn)
             with open(fullfn, 'w') as f:
-                f.write(''.join(lines))
+                f.write(alllines)
                 f.write(endlicensestr)
 
     finally:
@@ -284,6 +313,17 @@ def reprocess_sofa_test_lines(inlns, func_prefix, libname, inlinelicensestr):
         outlns.append(l)
 
     return outlns
+
+def extract_macro_names(m, exclude):
+    macros = []
+    prog = re.compile(r'''#define (\w*)''')
+    for line in m:
+        result = prog.match(line)
+        if result:
+            macro = result.group(1)
+            if macro not in exclude:
+                macros.append(macro)
+    return macros
 
 
 #These strings are "acceptable" uses of the "SOFA" text
