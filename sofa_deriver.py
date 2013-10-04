@@ -316,7 +316,7 @@ def reprocess_sofa_test_lines(inlns, func_prefix, libname, inlinelicensestr):
 
 def extract_macro_names(m, exclude):
     macros = []
-    prog = re.compile(r'''#define (\w*)''')
+    prog = re.compile(r'\s*#\s*define\s*\b(\w*)\b')
     for line in m:
         result = prog.match(line)
         if result:
