@@ -121,12 +121,8 @@ def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
         # extract macro names from sofam.h
         # except SOFAMHDEF
         # we will use it later
-        exclude = ['SOFAMHDEF']
         macros = []
-        for ti in tfn:
-            if ti.name.endswith('sofam.h'):
-                macros = extract_macro_names(tfn.extractfile(ti), exclude)
-                break
+        macros_exclude = ['SOFAMHDEF']
     
         for ti in tfn:
             contents = None
@@ -138,7 +134,10 @@ def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
                                                      libname,
                                                      inlinelicensestr)
             elif ti.name.endswith('.h'):
-                contents = reprocess_sofa_h_lines(tfn.extractfile(ti),
+                extractedh = list(tfn.extractfile(ti))
+                if ti.name.endswith('sofam.h'):
+                    macros = extract_macro_names(extractedh, macros_exclude)
+                contents = reprocess_sofa_h_lines(extractedh,
                                                   func_prefix,
                                                   libname,
                                                   inlinelicensestr)
@@ -161,7 +160,10 @@ def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
                 print('Making directory', dirnm)
             os.mkdir(dirnm)
 
-        # prepare to prefix the macros
+        # prepare to prefix the macros.
+        # this is done here instead of in the `reprocess_sofa_*_lines`
+        # functions because the macros have to be extracted from sofam.h, and
+        # there's no guarantee above that it will come first
 
         # given a re match obj, return
         # the match (the macro name), prefixed and upper cased
@@ -179,7 +181,7 @@ def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
                 check_for_sofa(lines, fn)
 
             alllines = ''.join(lines)
-            # join the lines and make the replace
+            # join the lines and replace the macros with the versions with an ERFA prefix
             for repl in repls:
                 alllines = repl.sub(prefix_macro, alllines)
 
