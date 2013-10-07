@@ -121,12 +121,8 @@ def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
         # extract macro names from sofam.h
         # except SOFAMHDEF
         # we will use it later
-        exclude = ['SOFAMHDEF']
         macros = []
-        for ti in tfn:
-            if ti.name.endswith('sofam.h'):
-                macros = extract_macro_names(tfn.extractfile(ti), exclude)
-                break
+        macros_exclude = ['SOFAMHDEF']
     
         for ti in tfn:
             contents = None
@@ -138,7 +134,10 @@ def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
                                                      libname,
                                                      inlinelicensestr)
             elif ti.name.endswith('.h'):
-                contents = reprocess_sofa_h_lines(tfn.extractfile(ti),
+                extractedh = list(tfn.extractfile(ti))
+                if ti.name.endswith('sofam.h'):
+                    macros = extract_macro_names(extractedh, macros_exclude)
+                contents = reprocess_sofa_h_lines(extractedh,
                                                   func_prefix,
                                                   libname,
                                                   inlinelicensestr)
