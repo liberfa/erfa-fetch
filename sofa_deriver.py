@@ -22,13 +22,13 @@ To see the options.
 
 
 DEFAULT_INLINE_LICENSE_STR = """
-Copyright (C) 2013-2014, NumFOCUS Foundation.
+Copyright (C) 2013-{curryr}, NumFOCUS Foundation.
 Derived, with permission, from the SOFA library.  See notes at end of file.
 """[1:-1]
 
 DEFAULT_FILE_END_LICENSE_STR = """
 
-Copyright (C) 2013-2014, NumFOCUS Foundation.
+Copyright (C) 2013-{curryr}, NumFOCUS Foundation.
 All rights reserved.
 
 This library is derived, with permission, from the International
@@ -99,20 +99,29 @@ def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
     `libname`.
 
     Note that `inlinelicensestr` and `endlicensestr` should be plain
-    license/copyright statements (possibly with ``{libnameuppercase}``),
-    and this function will convert them to a C comment.
+    license/copyright statements (possibly with ``{libnameuppercase}`` or
+    ``{curryr}``), and this function will convert them to a C comment.
     """
     import os
     import tarfile
+    import datetime
 
-    filecontents = {}
     # this dict maps filenames to the code in the form of a list of strings.
     # they do *not* have the end license, as that gets added when writing.
+    filecontents = {}
+
+    # this is the current year for whoever is running this.
+    curryr = datetime.datetime.now().year
+    if curryr < 2013:
+        print("WARNING: Your system thinks the year is < 2013, which is "
+              "impossible unless you have fallen through a wormhole. You'll "
+              "need to set your clock correctly for the copyright year to be "
+              "correct.")
 
     #turn the license strings into a SOFA-style C comment
-    inlinelicensestr = inlinelicensestr.format(libnameuppercase=libname.upper())
+    inlinelicensestr = inlinelicensestr.format(libnameuppercase=libname.upper(), curryr=curryr)
     inlinelicensestr = '**  ' + '\n**  '.join(inlinelicensestr.split('\n')) + '\n'
-    endlicensestr = endlicensestr.format(libnameuppercase=libname.upper())
+    endlicensestr = endlicensestr.format(libnameuppercase=libname.upper(), curryr=curryr)
     endlicensestr = '**  ' + '\n**  '.join(endlicensestr.split('\n'))
     endlicensestr = '/*' + ('-' * 70) + '\n' + endlicensestr + '\n*/\n'
     #first open the tar file
@@ -123,7 +132,7 @@ def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
         # we will use it later
         macros = []
         macros_exclude = ['SOFAMHDEF']
-    
+
         for ti in tfn:
             contents = None
 
