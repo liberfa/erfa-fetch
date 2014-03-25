@@ -22,13 +22,13 @@ To see the options.
 
 
 DEFAULT_INLINE_LICENSE_STR = """
-Copyright (C) 2013, NumFOCUS Foundation.
+Copyright (C) 2013-2014, NumFOCUS Foundation.
 Derived, with permission, from the SOFA library.  See notes at end of file.
 """[1:-1]
 
 DEFAULT_FILE_END_LICENSE_STR = """
 
-Copyright (C) 2013, NumFOCUS Foundation.
+Copyright (C) 2013-2014, NumFOCUS Foundation.
 All rights reserved.
 
 This library is derived, with permission, from the International
