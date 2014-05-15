@@ -32,10 +32,13 @@ def flatten_source(srcdir, newname=None, verbose=False):
     import glob
 
     if newname is None:
-        newname = srcdir
-    coutfn = newname + '.c'
-    houtfn = newname + '.h'
-    testoutfn = 'test_{fn}.c'.format(fn=newname)
+        libname = srcdir
+    else:
+        libname = newname
+
+    coutfn = libname + '.c'
+    houtfn = libname + '.h'
+    testoutfn = 'test_{fn}.c'.format(fn=libname)
 
     cinfns = glob.glob(os.path.join(srcdir, '*.c'))
     hinfns = glob.glob(os.path.join(srcdir, '*.h'))
@@ -80,9 +83,9 @@ def flatten_source(srcdir, newname=None, verbose=False):
     if verbose:
         print('Writing', houtfn)
     with open(houtfn, 'w') as fw:
-        fw.write(hhdrtempl.format(libnamespace=' '.join(srcdir),
-                                  libnameup=srcdir.upper(),
-                                  libname=srcdir))
+        fw.write(hhdrtempl.format(libnamespace=' '.join(libname),
+                                  libnameup=libname.upper(),
+                                  libname=libname))
         fw.write(''.join(hlines))
         #need to add an extra endif
         fw.write('#endif\n\n')
