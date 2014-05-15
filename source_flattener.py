@@ -50,9 +50,24 @@ def flatten_source(srcdir, newname=None, verbose=False):
             break
     cinfns.remove(testinfn)
 
-    #first process the header files and combine into one
+    # first make sure the macros come first so that any types/structures are
+    # defined before the actual
+    reordered_hinfns = []
+    macrodone = False
+    for hinfn in sorted(hinfns):
+        if hinfn.endswith('m.h'):
+            if macrodone:
+                raise ValueError('Encountered *two* files of the form "*m.h" - '
+                                 'can\'t proceed with this ambiguity, because '
+                                 'the macro definitions have to come first.')
+            reordered_hinfns.insert(0, hinfn)
+            macrodone = True
+        else:
+            reordered_hinfns.append(hinfn)
+
+    #now actually process the header files and combine into one
     hlines = []
-    for i, fn in enumerate(sorted(hinfns)):
+    for i, fn in enumerate(reordered_hinfns):
         contentlines, hlicense = extract_content(fn)
 
         # first remove the header up through the end of the license comment
@@ -104,8 +119,10 @@ def flatten_source(srcdir, newname=None, verbose=False):
     with open(testoutfn, 'w') as fw:
         with open(testinfn) as fr:
             s = fr.read()
-            torepl = '#include "{0}"'.format(houtfn.replace('.h', 'm.h'))
-            fw.write(s.replace(torepl, ''))
+            macroincludestr = '#include "{0}"'.format(houtfn.replace('.h', 'm.h'))
+            angledinclstr = '#include <{0}>'.format(houtfn)
+            quotedinclstr = angledinclstr.replace('<','"').replace('>','"')
+            fw.write(s.replace(macroincludestr, '').replace(angledinclstr, quotedinclstr))
 
 
 def extract_content(fn):
