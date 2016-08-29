@@ -18,7 +18,7 @@ Testing
 
 To compile and execute the tests, do:
 
-    [CC] erfa/*.c -lm -o test_erfa
+    [CC] erfa/*.c -Ierfa -lm -o test_erfa
     ./test_erfa --verbose
 
 where ``[CC]`` is replaced by your preferred C compiler.
