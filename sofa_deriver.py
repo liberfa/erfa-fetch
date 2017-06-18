@@ -321,11 +321,16 @@ def reprocess_sofa_test_lines(inlns, func_prefix, libname, inlinelicensestr):
 
             if insofapart:
                 if l.startswith('*/'):
-                    insofapart = False
+                    insofapart = inhdr = False
                     outlns.append(l)
                 continue
 
             l = l.replace('s o f a', spaced_libname)
+
+        elif l.startswith('/*----------------------------------------------------------------------'):
+            #this means we are starting the license section, so we are done.
+            # Note that prior to SOFA 20170420, this was absent from t_erfa_c.c
+            break
 
         l = l.replace('iau', func_prefix)
         l = l.replace('sofa', libnamelow)
