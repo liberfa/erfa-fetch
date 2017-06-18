@@ -93,7 +93,7 @@ POSSIBILITY OF SUCH DAMAGE.
 def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
                            inlinelicensestr=DEFAULT_INLINE_LICENSE_STR,
                            endlicensestr=DEFAULT_FILE_END_LICENSE_STR,
-                           verbose=True):
+                           verbose=True, copyrightyear=None):
     """
     Takes a SOFA .tar.gz file and produces a derived version of the
     source code with custom licensing and copyright.
@@ -114,17 +114,21 @@ def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
     filecontents = {}
 
     # this is the current year for whoever is running this.
-    curryr = datetime.datetime.now().year
-    if curryr < 2013:
-        print("WARNING: Your system thinks the year is < 2013, which is "
-              "impossible unless you have fallen through a wormhole. You'll "
-              "need to set your clock correctly for the copyright year to be "
-              "correct.")
+    if copyrightyear is None:
+        copyrightyear = datetime.datetime.now().year
+        if copyrightyear < 2013:
+            print("WARNING: Your system thinks the year is < 2013, which is "
+                  "impossible unless you have fallen through a wormhole. "
+                  "You'll need to set your clock correctly or use the "
+                  "copyright-year argument for the copyright year to be "
+                  "correct.")
 
     #turn the license strings into a SOFA-style C comment
-    inlinelicensestr = inlinelicensestr.format(libnameuppercase=libname.upper(), curryr=curryr)
+    inlinelicensestr = inlinelicensestr.format(libnameuppercase=libname.upper(),
+                                               curryr=copyrightyear)
     inlinelicensestr = '**  ' + '\n**  '.join(inlinelicensestr.split('\n')) + '\n'
-    endlicensestr = endlicensestr.format(libnameuppercase=libname.upper(), curryr=curryr)
+    endlicensestr = endlicensestr.format(libnameuppercase=libname.upper(),
+                                         curryr=copyrightyear)
     endlicensestr = '**  ' + '\n**  '.join(endlicensestr.split('\n'))
     endlicensestr = '/*' + ('-' * 70) + '\n' + endlicensestr + '\n*/\n'
     #first open the tar file
@@ -466,6 +470,11 @@ if __name__ == '__main__':
                         help='Download the latest SOFA regardless regardless '
                         'of whether there is already a SOFA in the current '
                         'directory')
+    parser.add_argument('--copyright-year', '-y', default=None,
+                        help='The "current" year for the purposes of the end '
+                              'of the copyright in each file.  If not given, '
+                              'defaults to the current year when this script '
+                              'is run')
     parser.add_argument('--quiet', '-q', default=False, action='store_true',
                         help='Print less info to the terminal.')
     args = parser.parse_args()
@@ -503,7 +512,8 @@ if __name__ == '__main__':
     if not args.quiet:
         print('Using sofa tarfile "{0}" for reprocessing'.format(sofatarfn))
 
-    reprocess_sofa_tarfile(sofatarfn, verbose=not args.quiet)
+    reprocess_sofa_tarfile(sofatarfn, verbose=not args.quiet,
+                           copyrightyear=args.copyright_year)
 
     if not args.quiet:
         print('\nCreated new set of source files based on SOFA version '
