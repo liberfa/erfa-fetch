@@ -26,7 +26,7 @@ chdrtempl = """#include "{houtfn}"
 """
 
 
-def flatten_source(srcdir, newname=None, verbose=False):
+def flatten_source(srcdir, newname=None, verbose=False, addversion=None):
     import os
     import re
     import glob
@@ -94,10 +94,18 @@ def flatten_source(srcdir, newname=None, verbose=False):
         contentlines, clicense = extract_content(fn)
         clines.extend(contentlines)
 
+    #construct the version info string, if needed
+    if addversion:
+        versionstr = '//Derived from {libname} version {addversion}\n\n'.format(**locals())
+    else:
+        versionstr = ''
+
     #now save out the hlines and clines, putting in the appropriate headers and ending license
     if verbose:
         print('Writing', houtfn)
     with open(houtfn, 'w') as fw:
+        if versionstr:
+            fw.write(versionstr)
         fw.write(hhdrtempl.format(libnamespace=' '.join(libname),
                                   libnameup=libname.upper(),
                                   libname=libname))
@@ -109,19 +117,25 @@ def flatten_source(srcdir, newname=None, verbose=False):
     if verbose:
         print('Writing', coutfn)
     with open(coutfn, 'w') as fw:
+        if versionstr:
+            fw.write(versionstr)
         fw.write(chdrtempl.format(houtfn=houtfn))
         fw.write(''.join(clines))
         fw.write(clicense)
 
-    #finally, save out the test file
+    #finally, save out the test file with relevant modifications
+    macroincludestr = '#include "{0}"'.format(houtfn.replace('.h', 'm.h'))
+    angledinclstr = '#include <{0}>'.format(houtfn)
+    quotedinclstr = angledinclstr.replace('<','"').replace('>','"')
+
     if verbose:
         print('Writing', testoutfn)
     with open(testoutfn, 'w') as fw:
         with open(testinfn) as fr:
             s = fr.read()
-            macroincludestr = '#include "{0}"'.format(houtfn.replace('.h', 'm.h'))
-            angledinclstr = '#include <{0}>'.format(houtfn)
-            quotedinclstr = angledinclstr.replace('<','"').replace('>','"')
+
+            if versionstr:
+                fw.write(versionstr)
             fw.write(s.replace(macroincludestr, '').replace(angledinclstr, quotedinclstr))
 
 
@@ -166,6 +180,10 @@ if __name__ == '__main__':
     parser.add_argument('--newname', '-n', default=None, help='The base name '
                         'to use for the new files.  Will default to the same '
                         'as the source directory if not given.')
+    parser.add_argument('--include-version', '-v', default=None, help='Gives a'
+                        'version number to put at the header of the generated '
+                        'files.  If not given, no version number will be '
+                        'present.' )
     parser.add_argument('--quiet', '-q', default=False, action='store_true',
                         help='Print less info to the terminal.')
     args = parser.parse_args()
@@ -194,4 +212,4 @@ if __name__ == '__main__':
     else:
         srcdir = args.srcdir
 
-    flatten_source(srcdir, args.newname, not args.quiet)
+    flatten_source(srcdir, args.newname, not args.quiet, args.include_version)
