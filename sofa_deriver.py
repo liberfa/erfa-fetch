@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
-import sys
 import re
+import sys
+
+# for py2/py3 compatibility
+import six
 
 """
 This script downloads the latest SOFA, and then transforms the code to
@@ -183,7 +186,7 @@ def reprocess_sofa_tarfile(sofatarfn, libname='erfa', func_prefix='era',
         # precompile a regular expresion for each macro name
         repls = [re.compile(r'\b%s\b' % macro) for macro in macros]
 
-        for fn, lines in filecontents.iteritems():
+        for fn, lines in filecontents.items():
             fullfn = os.path.join(dirnm, fn)
 
             if verbose:
@@ -209,6 +212,7 @@ def reprocess_sofa_h_lines(inlns, func_prefix, libname, inlinelicensestr):
     donewheader = False
 
     for l in inlns:
+        l = l.decode()
         if l.startswith('#'):
             #includes and #ifdef/#define directives
             outlns.append(l.replace('SOFA', libname.upper()).replace('sofa', libname.lower()))
@@ -245,6 +249,7 @@ def reprocess_sofa_c_lines(inlns, func_prefix, libname, inlinelicensestr):
     incopyright = False  # indicates being inside the copyright/revision part of the doc comment of the SOFA function
 
     for l in inlns:
+        l = l.decode()
         if inhdr:
             if (not replacedprefix) and 'iau' in l:
                 # this is the function definition and the end of the header
@@ -305,6 +310,7 @@ def reprocess_sofa_test_lines(inlns, func_prefix, libname, inlinelicensestr):
     inhdr = True
     insofapart = False
     for l in inlns:
+        l = l.decode()
         if inhdr:
             if l.startswith('**  SOFA release'):
                 insofapart = True
@@ -329,6 +335,7 @@ def extract_macro_names(m, exclude):
     macros = []
     prog = re.compile(r'\s*#\s*define\s*\b(\w*)\b')
     for line in m:
+        line = line.decode()
         result = prog.match(line)
         if result:
             macro = result.group(1)
@@ -342,7 +349,7 @@ ACCEPTSOFASTRS = ['Derived, with permission, from the SOFA library']
 
 
 def check_for_sofa(lns, fn='', printfile=sys.stderr):
-    if isinstance(lns, basestring):
+    if isinstance(lns, six.string_types):
         lns = lns.split('\n')
     for i, l in enumerate(lns):
         if 'sofa' in l.lower():
@@ -363,7 +370,7 @@ def download_sofa(url=None, dlloc='.', verbose=True):
     If `extract`, also extract that .tar.gz file
     """
     import os
-    import urllib
+    from six.moves.urllib.request import urlretrieve
 
     if url is None:
         url = _find_sofa_url_on_web_page()
@@ -375,7 +382,7 @@ def download_sofa(url=None, dlloc='.', verbose=True):
     fnpath = os.path.join(dlloc, fn)
     if verbose:
         print('Downloading {fn} to {fnpath}'.format(fn=fn, fnpath=fnpath))
-    retfn, headers = urllib.urlretrieve(url, fnpath)
+    retfn, headers = urlretrieve(url, fnpath)
 
     return retfn
 
@@ -384,8 +391,8 @@ def _find_sofa_url_on_web_page(url='http://www.iausofa.org/current_C.html'):
     """
     Finds and returns the download URL for the latest C SOFA.
     """
-    import urllib2
-    from HTMLParser import HTMLParser
+    from six.moves.urllib.request import urlopen
+    from six.moves.html_parser import HTMLParser
 
     # create a subclass and override the handler methods
     class SOFAParser(HTMLParser):
@@ -398,10 +405,10 @@ def _find_sofa_url_on_web_page(url='http://www.iausofa.org/current_C.html'):
                 self.matched_urls.append(attrs[-1][-1])
 
     parser = SOFAParser()
-    u = urllib2.urlopen(url)
+    u = urlopen(url)
     try:
         for l in u:
-            parser.feed(l)
+            parser.feed(l.decode())
     finally:
         u.close()
 
@@ -503,4 +510,3 @@ if __name__ == '__main__':
               '"{0}".'.format(sofatarfn.replace('sofa_c-', '').replace('.tar.gz', '')))
         print('Be sure to update any relevant version information when you '
               'copy this to its new home.')
-
